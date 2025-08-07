@@ -1,0 +1,70 @@
+services:
+  db:
+    image: postgres:15
+    container_name: db
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - frappe-network
+  
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - frappe-network
+  
+  frappe:
+    image: frappe/frappe-worker:latest
+    container_name: frappe
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - frappe_sites:/home/frappe/frappe-bench/sites
+      - frappe_assets:/home/frappe/frappe-bench/sites/assets
+    restart: unless-stopped
+    networks:
+      - frappe-network
+    
+  nginx:
+    build:
+      context: ./nginx/
+    depends_on:
+      - frappe
+    ports:
+      -"80:80"
+      -"443:443"
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  acme_companion:
+    image: nginxproxy/acme-companion
+    container_name: acme
+    volumes_from:
+      - nginx
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme:/etc/acme.sh
+      - certs:/etc/nginx/certs:rw
+
+
+volumes:
+  postgres_data:
+  certs:
+  vhost:
+  html:
+  acme:
+
+networks:
+  frappe-network:
+    driver: bridge
+
