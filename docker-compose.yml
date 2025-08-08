@@ -21,7 +21,7 @@ services:
     image: frappe/frappe-worker:latest
     container_name: frappe
     environment:
-      - LETSENCRYPT_HOST="${LETSENCRYPT_HOST}""
+      - LETSENCRYPT_HOST="${LETSENCRYPT_HOST}"
     depends_on:
       - db
       - redis
