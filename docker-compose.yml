@@ -21,6 +21,8 @@ services:
     image: frappe/frappe-worker:latest
     container_name: frappe
     environment:
+      - DB_USER="${DB_USER}"
+      - DB_PASSWORD="${DB_PASSWORD}"
       - LETSENCRYPT_HOST="${LETSENCRYPT_HOST}"
     depends_on:
       - db
