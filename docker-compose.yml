@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   db:
     image: postgres:15
@@ -6,24 +7,20 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+    restart: always
     networks:
       - frappe-network
   
   redis:
     image: redis:alpine
     container_name: redis
-    restart: unless-stopped
+    restart: always
     networks:
       - frappe-network
   
   frappe:
     image: frappe/frappe-worker:latest
     container_name: frappe
-    environment:
-      - DB_USER="${DB_USER}"
-      - DB_PASSWORD="${DB_PASSWORD}"
-      - LETSENCRYPT_HOST="${LETSENCRYPT_HOST}"
     depends_on:
       - db
       - redis
@@ -34,7 +31,7 @@ services:
     volumes:
       - frappe_sites:/home/frappe/frappe-bench/sites
       - frappe_assets:/home/frappe/frappe-bench/sites/assets
-    restart: unless-stopped
+    restart: always
     networks:
       - frappe-network
     
