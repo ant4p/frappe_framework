@@ -20,6 +20,9 @@ services:
   frappe:
     image: frappe/frappe-worker:latest
     container_name: frappe
+    environment:
+      - VIRTUAL_HOST=fox6.ru
+      - LETSENCRYPT_HOST=fox6.ru
     depends_on:
       - db
       - redis
