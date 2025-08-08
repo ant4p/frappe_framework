@@ -1,0 +1,9 @@
+{
+    "db-type": "${DB_TYPE}",
+    "db-host": "${POSTGRES_HOST}",
+    "db-port": "${POSTGRES_PORT}",
+    "db-name": "${POSTGRES_DB}",
+    "db-root-username": "${POSTGRES_USER}",
+    "db-root-password": "${POSTGRES_PASSWORD}",
+    "admin-password": "${ADMIN_PASSWORD}"
+}
