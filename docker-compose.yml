@@ -36,7 +36,7 @@ services:
     
     
   nginx:
-    image: nginx
+    image: nginx:alpine
     depends_on:
       - frappe
     ports:
@@ -53,8 +53,6 @@ services:
   acme:
     image: nginxproxy/acme-companion
     container_name: acme
-    volumes_from:
-      - nginx
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - certs:/etc/nginx/certs
@@ -71,7 +69,6 @@ volumes:
   certs:
   vhost:
   html:
-  acme:
 
 networks:
   frappe-network:
