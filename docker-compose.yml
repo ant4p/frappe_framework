@@ -59,6 +59,8 @@ services:
 
 volumes:
   postgres_data:
+  frappe_sites:
+  frappe_assets:
   certs:
   vhost:
   html:
