@@ -35,7 +35,7 @@ services:
       - frappe-network
     
     
-  nginx:
+  nginx-proxy:
     image: nginxproxy/nginx-proxy
     depends_on:
       - frappe
