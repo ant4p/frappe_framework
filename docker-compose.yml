@@ -25,12 +25,15 @@ services:
       - redis
     env_file:
       - .env
+    ports:
+      - {FRAPPE_PORTS}
     volumes:
       - frappe_sites:/home/frappe/frappe-bench/sites
       - frappe_assets:/home/frappe/frappe-bench/sites/assets
     restart: unless-stopped
     networks:
       - frappe-network
+    
     
   nginx:
     build:
@@ -45,8 +48,10 @@ services:
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - frappe-network
 
-  acme_companion:
+  acme:
     image: nginxproxy/acme-companion
     container_name: acme
     volumes_from:
@@ -55,6 +60,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - acme:/etc/acme.sh
       - certs:/etc/nginx/certs:rw
+    networks:
+      - frappe-network
 
 
 volumes:
