@@ -2,6 +2,10 @@ services:
   db:
     image: postgres:15
     container_name: db
+    command: >
+      -c max_connections=1000
+      -c shared_buffers=1GB
+      -c idle_in_transaction_session_timeout=0
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
