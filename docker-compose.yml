@@ -4,7 +4,7 @@ services:
     container_name: db
     command: >
       -c max_connections=100
-      -c shared_buffers=256MB
+      -c shared_buffers=128MB
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -29,8 +29,16 @@ services:
       - db
       - redis
     environment:
+      SITE_NAME: ${SITE_NAME}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      DEVELOPER_MODE: ${DEVELOPER_MODE}
     ports:
       - "8000:8000"
     volumes:
@@ -82,4 +90,3 @@ volumes:
 networks:
   frappe-network:
     driver: bridge
-
