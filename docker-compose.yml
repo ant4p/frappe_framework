@@ -1,33 +1,35 @@
 services:
-  postgres:
-    image: postgres:15
-    container_name: postgres
+  mariadb:
+    image: mariadb:10.6
+    container_name: mariadb
     command: [
-      "-c", "max_connections=100",
-      "-c", "shared_buffers=128 MB",
-      ]
+      "--max_connections=1000",
+      "--innodb_buffer_pool_size=1G",
+      "--innodb_log_file_size=256M"
+    ]
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: always
+      - mariadb_data:/var/lib/mysql
+    restart: unless-stopped
     networks:
       - frappe-network
   
   redis:
-    image: redis:alpine
+    image: redis:6.2-alpine
     container_name: redis
     restart: always
     networks:
       - frappe-network
   
   frappe:
-    image: frappe/frappe-worker:latest
+    image: frappe/frappe-worker:v15.7.1
     container_name: frappe
     depends_on:
-      - postgres
+      - mariadb
       - redis
     environment:
       SITE_NAME: ${SITE_NAME}
@@ -38,8 +40,11 @@ services:
       VIRTUAL_HOST: ${VIRTUAL_HOST}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
       DEVELOPER_MODE: ${DEVELOPER_MODE}
+      MARIADB_HOST: mariadb
+      FRAPPE_VERSION: v15.7.1
     ports:
       - "8000:8000"
     volumes:
@@ -81,7 +86,7 @@ services:
 
 
 volumes:
-  postgres_data:
+  mariadb_data:
   frappe_sites:
   frappe_assets:
   certs:
