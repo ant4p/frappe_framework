@@ -1,10 +1,11 @@
 services:
-  db:
+  postgres:
     image: postgres:15
-    container_name: db
-    command: >
-      -c max_connections=100
-      -c shared_buffers=128MB
+    container_name: postgres
+    command: [
+      "-c", "max_connections=100",
+      "-c", "shared_buffers=128M",
+      ]
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -26,7 +27,7 @@ services:
     image: frappe/frappe-worker:latest
     container_name: frappe
     depends_on:
-      - db
+      - postgres
       - redis
     environment:
       SITE_NAME: ${SITE_NAME}
