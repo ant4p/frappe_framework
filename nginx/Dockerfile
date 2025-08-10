@@ -1,1 +1,0 @@
-FROM nginxproxy/nginx-proxy
