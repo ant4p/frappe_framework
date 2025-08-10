@@ -26,7 +26,7 @@ services:
       - frappe-network
   
   frappe:
-    image: frappe/frappe-worker:v15.76.0
+    image: frappe/frappe-worker
     container_name: frappe
     depends_on:
       - mariadb
