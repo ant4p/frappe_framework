@@ -1,100 +1,85 @@
+version: '3.8'
+
 services:
-  mariadb:
-    image: mariadb:10.6
-    container_name: mariadb
+  postgres:
+    image: postgres:13
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      POSTGRES_USER: frappe
+      POSTGRES_PASSWORD: frappe
+      POSTGRES_DB: frappe
     volumes:
-      - mariadb_data:/var/lib/mysql
-    restart: unless-stopped
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frappe"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - frappe-network
-  
+
   redis:
-    image: redis:6.2-alpine
-    container_name: redis
-    restart: always
+    image: redis:6
     networks:
       - frappe-network
-  
+
+  redis-queue:
+    image: redis:6
+    networks:
+      - frappe-network
+
+  redis-cache:
+    image: redis:6
+    networks:
+      - frappe-network
+
   frappe:
-    image: frappe/frappe-worker:${FRAPPE_VERSION}
-    container_name: frappe
-    depends_on:
-      - mariadb
-      - redis
+    image: frappe/frappe-worker:v14
     environment:
-      SITE_NAME: ${SITE_NAME}
-      DB_PORT: ${DB_PORT}
-      DB_NAME: ${DB_NAME}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      VIRTUAL_HOST: ${VIRTUAL_HOST}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
-      DEVELOPER_MODE: ${DEVELOPER_MODE}
-      MARIADB_HOST: ${DB_HOST}
-    ports:
-      - "8000:8000"
+      - SITE_NAME=fox6.ru
+      - DB_TYPE=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=frappe
+      - DB_USER=frappe
+      - DB_PASSWORD=frappe
+      - REDIS_CACHE=redis-cache://redis-cache:6379
+      - REDIS_QUEUE=redis-queue://redis-queue:6379
+      - REDIS_SOCKETIO=redis://redis:6379
+      - SOCKETIO_PORT=9000
     volumes:
-      - frappe_sites:/home/frappe/frappe-bench/sites
-      - frappe_assets:/home/frappe/frappe-bench/sites/assets
-    restart: always
+      - sites-data:/home/frappe/frappe-bench/sites
+      - assets-data:/home/frappe/frappe-bench/sites/assets
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+      redis-cache:
+        condition: service_started
     networks:
       - frappe-network
-    command: >
-      bash -c "
-      until nc -z mariadb 3306; do sleep 1; done &&
-      until nc -z redis 6379; do sleep 1; done &&
-      cd /home/frappe/frappe-bench &&
-      [ ! -f /home/frappe/frappe-bench/sites/${SITE_NAME}/site_config.json ] &&
-      bench new-site ${SITE_NAME} --db-name ${DB_NAME} --db-password ${DB_PASSWORD} --admin-password ${ADMIN_PASSWORD} --install-app erpnext || true &&
-      bench --site ${SITE_NAME} set-config hostname ${VIRTUAL_HOST} &&
-      bench --site ${SITE_NAME} set-config enable_ssl_certificate 1 &&
-      bench --site ${SITE_NAME} enable-scheduler &&
-      bench start
-      "
-    
-  nginx-proxy:
-    image: nginxproxy/nginx-proxy
-    container_name: nginx-proxy
-    depends_on:
-      - frappe
+
+  nginx:
+    image: nginx:latest
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - certs:/etc/nginx/certs:ro
-      - vhost:/etc/nginx/vhost.d
-      - html:/usr/share/nginx/html
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    networks:
-      - frappe-network
-
-  acme:
-    image: nginxproxy/acme-companion
-    container_name: acme
-    environment:
-      - NGINX_PROXY_CONTAINER=nginx-proxy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - certs:/etc/nginx/certs
-      - vhost:/etc/nginx/vhost.d
-      - html:/usr/share/nginx/html
+      - sites-data:/usr/share/nginx/html/sites:ro
+      - assets-data:/usr/share/nginx/html/assets:ro
+      - ./nginx-conf:/etc/nginx/conf.d
+    depends_on:
+      - frappe
     networks:
       - frappe-network
 
 volumes:
-  mariadb_data:
-  frappe_sites:
-  frappe_assets:
-  certs:
-  vhost:
-  html:
+  postgres-data:
+  sites-data:
+  assets-data:
+  nginx-conf:
 
 networks:
   frappe-network:
