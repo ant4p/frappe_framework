@@ -1,4 +1,4 @@
-services:
+sservices:
   mariadb:
     image: mariadb:10.6
     container_name: mariadb
@@ -38,7 +38,6 @@ services:
       LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
       DEVELOPER_MODE: ${DEVELOPER_MODE}
       MARIADB_HOST: ${DB_HOST}
-      FRAPPE_VERSION: ${FRAPPE_VERSION}
     ports:
       - "8000:8000"
     volumes:
@@ -50,13 +49,15 @@ services:
     command: >
       bash -c "
       until nc -z mariadb 3306; do sleep 1; done &&
+      until nc -z redis 6379; do sleep 1; done &&
       cd /home/frappe/frappe-bench &&
-      [ ! -f /home/frappe/frappe-bench/sites/fox6.ru/site_config.json ] &&
-      bench new-site fox6.ru --db-name dbfox6 --db-password passwordfox6 --admin-password 1111 --install-app erpnext || true &&
-      bench --site fox6.ru enable-scheduler &&
+      [ ! -f /home/frappe/frappe-bench/sites/${SITE_NAME}/site_config.json ] &&
+      bench new-site ${SITE_NAME} --db-name ${DB_NAME} --db-password ${DB_PASSWORD} --admin-password ${ADMIN_PASSWORD} --install-app erpnext || true &&
+      bench --site ${SITE_NAME} set-config hostname ${VIRTUAL_HOST} &&
+      bench --site ${SITE_NAME} set-config enable_ssl_certificate 1 &&
+      bench --site ${SITE_NAME} enable-scheduler &&
       bench start
       "
-    
     
   nginx-proxy:
     image: nginxproxy/nginx-proxy
@@ -86,7 +87,6 @@ services:
       - html:/usr/share/nginx/html
     networks:
       - frappe-network
-
 
 volumes:
   mariadb_data:
